@@ -12,6 +12,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Camera, X } from 'lucide-react-native';
 import { useProductStore } from '@/stores/productStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const categories = ['Phone', 'Computer', 'Bike', 'Book'];
 
@@ -26,9 +27,10 @@ export default function PostAd() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { addProduct } = useProductStore();
+  const { user } = useAuthStore();
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const pickImage = async () => {
@@ -39,7 +41,10 @@ export default function PostAd() {
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Please allow access to your photo library');
+      Alert.alert(
+        'Permission Required',
+        'Please allow access to your photo library'
+      );
       return;
     }
 
@@ -51,18 +56,24 @@ export default function PostAd() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setImages(prev => [...prev, result.assets[0].uri]);
+      setImages((prev) => [...prev, result.assets[0].uri]);
     }
   };
 
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = () => {
     const { title, description, price, category, location } = formData;
-    
-    if (!title.trim() || !description.trim() || !price.trim() || !category || !location.trim()) {
+
+    if (
+      !title.trim() ||
+      !description.trim() ||
+      !price.trim() ||
+      !category ||
+      !location.trim()
+    ) {
       Alert.alert('Error', 'Please fill in all fields');
       return false;
     }
@@ -80,28 +91,61 @@ export default function PostAd() {
     return true;
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+ const handleSubmit = async () => {
+  if (!user?.varsityId || typeof user.varsityId !== 'string') {
+    Alert.alert('Error', 'Invalid or missing user varsity ID');
+    return;
+  }
+  if (!validateForm()) return;
 
-    setLoading(true);
-    try {
-      await addProduct({
-        ...formData,
-        price: Number(formData.price),
-        images,
-      });
-      
+  setLoading(true);
+  try {
+    const formDataToSend = new FormData();
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('price', formData.price);
+    formDataToSend.append('category', formData.category);
+    formDataToSend.append('location', formData.location);
+    formDataToSend.append('sellerName', user?.fullName || '');
+    formDataToSend.append('sellerVarsityId', user.varsityId);
+
+    images.forEach((imageUri, index) => {
+      const imageFile = {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: `image_${index}.jpg`,
+      } as any;
+      formDataToSend.append('images', imageFile);
+    });
+
+    console.log('Submitting product with form data:', {
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      category: formData.category,
+      location: formData.location,
+      imagesCount: images.length,
+      sellerName: user.fullName,
+      sellerVarsityId: user.varsityId,
+    });
+
+    const success = await addProduct(formDataToSend);
+    
+    if (success) {
       Alert.alert(
         'Success',
-        'Your ad has been submitted for admin approval',
+        'Your product has been submitted for admin approval',
         [{ text: 'OK', onPress: resetForm }]
       );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to submit ad');
-    } finally {
-      setLoading(false);
+    } else {
+      Alert.alert('Error', 'Failed to submit product. Please try again.');
     }
-  };
+  } catch (error) {
+    Alert.alert('Error', 'Failed to submit product');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const resetForm = () => {
     setFormData({
@@ -118,7 +162,9 @@ export default function PostAd() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Post New Ad</Text>
-        <Text style={styles.headerSubtitle}>Sell your items to BUBT students</Text>
+        <Text style={styles.headerSubtitle}>
+          Sell your items to BUBT students
+        </Text>
       </View>
 
       <View style={styles.form}>
@@ -177,7 +223,8 @@ export default function PostAd() {
                 <Text
                   style={[
                     styles.categoryOptionText,
-                    formData.category === category && styles.activeCategoryOptionText,
+                    formData.category === category &&
+                      styles.activeCategoryOptionText,
                   ]}
                 >
                   {category}
@@ -213,7 +260,10 @@ export default function PostAd() {
               </View>
             ))}
             {images.length < 2 && (
-              <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
+              <TouchableOpacity
+                style={styles.imagePickerButton}
+                onPress={pickImage}
+              >
                 <Camera size={24} color="#6b7280" />
                 <Text style={styles.imagePickerText}>Add Photo</Text>
               </TouchableOpacity>
@@ -223,7 +273,8 @@ export default function PostAd() {
 
         <View style={styles.note}>
           <Text style={styles.noteText}>
-            📝 Your ad will be reviewed by admin before appearing on the marketplace
+            📝 Your ad will be reviewed by admin before appearing on the
+            marketplace
           </Text>
         </View>
 

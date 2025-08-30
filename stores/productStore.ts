@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 
 interface Product {
-  id: string;
+  _id?: string;
+  id?: string;
   title: string;
   description: string;
   price: number;
@@ -18,7 +19,8 @@ interface Product {
 }
 
 interface Rating {
-  id: string;
+  _id?: string;
+  id?: string;
   buyerId: string;
   buyerName: string;
   rating: number;
@@ -28,167 +30,249 @@ interface Rating {
 
 interface ProductState {
   products: Product[];
-  addProduct: (productData: Omit<Product, 'id' | 'sellerId' | 'sellerName' | 'sellerVarsityId' | 'status' | 'createdAt' | 'ratings'>) => Promise<void>;
-  approveProduct: (productId: string) => void;
-  rejectProduct: (productId: string) => void;
-  addRating: (productId: string, rating: Omit<Rating, 'id' | 'createdAt'>) => void;
+  loading: boolean;
+  error: string | null;
+  addProduct: (productData: FormData) => Promise<boolean>;
+  fetchProducts: () => Promise<void>;
+  approveProduct: (productId: string) => Promise<boolean>;
+  rejectProduct: (productId: string) => Promise<boolean>;
+  addRating: (
+    productId: string,
+    rating: Omit<Rating, 'id' | 'createdAt'>
+  ) => Promise<boolean>;
   getProductById: (id: string) => Product | undefined;
 }
 
-// Mock product data
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    title: 'iPhone 12 Pro - Excellent Condition',
-    description: 'Selling my iPhone 12 Pro in excellent condition. No scratches, battery health 95%. Comes with original charger and box.',
-    price: 85000,
-    category: 'Phone',
-    location: 'BUBT Campus, Mirpur',
-    images: [
-      'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=400',
-      'https://images.pexels.com/photos/1275229/pexels-photo-1275229.jpeg?auto=compress&cs=tinysrgb&w=400'
-    ],
-    sellerId: '22235103001',
-    sellerName: 'John Doe',
-    sellerVarsityId: '22235103001',
-    status: 'approved',
-    createdAt: '2024-01-15T10:00:00Z',
-    ratings: [
-      {
-        id: '1',
-        buyerId: '22235103002',
-        buyerName: 'Jane Smith',
-        rating: 5,
-        comment: 'Great seller! Phone was exactly as described.',
-        createdAt: '2024-01-16T15:30:00Z'
-      }
-    ]
-  },
-  {
-    id: '2',
-    title: 'Programming Books Bundle',
-    description: 'Complete set of programming books including Java, Python, and Data Structures. Perfect for CSE students.',
-    price: 2500,
-    category: 'Book',
-    location: 'BUBT Library Area',
-    images: [
-      'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=400',
-      'https://images.pexels.com/photos/1290141/pexels-photo-1290141.jpeg?auto=compress&cs=tinysrgb&w=400'
-    ],
-    sellerId: '22235103002',
-    sellerName: 'Jane Smith',
-    sellerVarsityId: '22235103002',
-    status: 'approved',
-    createdAt: '2024-01-14T08:30:00Z',
-    ratings: []
-  },
-  {
-    id: '3',
-    title: 'Gaming Laptop - ASUS ROG',
-    description: 'High-performance gaming laptop. Intel i7, 16GB RAM, RTX 3060. Perfect for gaming and development work.',
-    price: 120000,
-    category: 'Computer',
-    location: 'BUBT Campus Gate',
-    images: [
-      'https://images.pexels.com/photos/5698171/pexels-photo-5698171.jpeg?auto=compress&cs=tinysrgb&w=400',
-      'https://images.pexels.com/photos/1251850/pexels-photo-1251850.jpeg?auto=compress&cs=tinysrgb&w=400'
-    ],
-    sellerId: '22235103001',
-    sellerName: 'John Doe',
-    sellerVarsityId: '22235103001',
-    status: 'pending',
-    createdAt: '2024-01-16T14:20:00Z',
-    ratings: []
-  },
-  {
-    id: '4',
-    title: 'Mountain Bike - Almost New',
-    description: 'Excellent mountain bike, barely used. Perfect for campus commute and weekend adventures.',
-    price: 15000,
-    category: 'Bike',
-    location: 'BUBT Sports Complex',
-    images: [
-      'https://images.pexels.com/photos/276517/pexels-photo-276517.jpeg?auto=compress&cs=tinysrgb&w=400',
-      'https://images.pexels.com/photos/170851/pexels-photo-170851.jpeg?auto=compress&cs=tinysrgb&w=400'
-    ],
-    sellerId: '22235103002',
-    sellerName: 'Jane Smith',
-    sellerVarsityId: '22235103002',
-    status: 'approved',
-    createdAt: '2024-01-13T16:45:00Z',
-    ratings: [
-      {
-        id: '2',
-        buyerId: '22235103001',
-        buyerName: 'John Doe',
-        rating: 4,
-        comment: 'Good bike, fair price!',
-        createdAt: '2024-01-14T12:00:00Z'
-      }
-    ]
-  }
-];
+// IMPORTANT: Change this to your computer's actual IP address
+// Find your IP with: ipconfig (Windows) or ifconfig (Mac/Linux)
+// Use the IP address that looks like: 192.168.1.xxx
+const API_BASE_URL = 'http://192.168.1.105:8000/api'; // Your actual working IP
 
 export const useProductStore = create<ProductState>((set, get) => ({
-  products: mockProducts,
+  products: [],
+  loading: false,
+  error: null,
 
-  addProduct: async (productData) => {
-    const { user } = useAuthStore.getState();
-    if (!user) return;
-
-    const newProduct: Product = {
-      ...productData,
-      id: Date.now().toString(),
-      sellerId: user.varsityId,
-      sellerName: user.fullName,
-      sellerVarsityId: user.varsityId,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      ratings: [],
-    };
-
-    set(state => ({
-      products: [...state.products, newProduct]
-    }));
+  fetchProducts: async () => {
+    set({ loading: true, error: null });
+    try {
+      console.log('Fetching products from:', `${API_BASE_URL}/products`);
+      const response = await fetch(`${API_BASE_URL}/products`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const products = await response.json();
+      console.log('Fetched products:', products.length, 'products');
+      set({ products, loading: false });
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      set({
+        error:
+          error instanceof Error ? error.message : 'Failed to fetch products',
+        loading: false,
+      });
+    }
   },
 
-  approveProduct: (productId: string) => {
-    set(state => ({
-      products: state.products.map(product =>
-        product.id === productId
-          ? { ...product, status: 'approved' as const }
-          : product
-      )
-    }));
+  addProduct: async (productData: FormData) => {
+  const { user } = useAuthStore.getState();
+  console.log('AddProduct - User state:', user);
+  console.log('AddProduct - User varsityId:', user?.varsityId); // Log to verify
+
+  if (!user) {
+    console.log('AddProduct - No user found');
+    set({ error: 'User not authenticated' });
+    return false;
+  }
+
+  set({ loading: true, error: null });
+  try {
+    const token = await getAuthToken();
+    console.log('AddProduct - Token:', token ? 'Found' : 'Not found');
+    
+    if (!token) {
+      console.log('AddProduct - No token found');
+      set({ error: 'Authentication token not found', loading: false });
+      return false;
+    }
+
+    console.log('Sending request to:', `${API_BASE_URL}/products/add`);
+    const response = await fetch(`${API_BASE_URL}/products/add`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: productData,
+    });
+
+    console.log('Response status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        errorData = { message: errorText };
+      }
+      throw new Error(errorData.message || 'Failed to add product');
+    }
+
+    const responseData = await response.json();
+    console.log('Product added successfully:', responseData);
+
+    await get().fetchProducts();
+    set({ loading: false });
+    return true;
+  } catch (error) {
+    console.error('Error adding product:', error);
+    set({
+      error: error instanceof Error ? error.message : 'Failed to add product',
+      loading: false,
+    });
+    return false;
+  }
+},
+
+  approveProduct: async (productId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        set({ error: 'Authentication token not found', loading: false });
+        return false;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/products/approve/${productId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to approve product');
+      }
+
+      // Update local state
+      set((state) => ({
+        products: state.products.map((product) =>
+          product._id === productId || product.id === productId
+            ? { ...product, status: 'approved' as const }
+            : product
+        ),
+        loading: false,
+      }));
+      return true;
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : 'Failed to approve product',
+        loading: false,
+      });
+      return false;
+    }
   },
 
-  rejectProduct: (productId: string) => {
-    set(state => ({
-      products: state.products.map(product =>
-        product.id === productId
-          ? { ...product, status: 'rejected' as const }
-          : product
-      )
-    }));
+  rejectProduct: async (productId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        set({ error: 'Authentication token not found', loading: false });
+        return false;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/products/reject/${productId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to reject product');
+      }
+
+      // Update local state
+      set((state) => ({
+        products: state.products.map((product) =>
+          product._id === productId || product.id === productId
+            ? { ...product, status: 'rejected' as const }
+            : product
+        ),
+        loading: false,
+      }));
+      return true;
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error ? error.message : 'Failed to reject product',
+        loading: false,
+      });
+      return false;
+    }
   },
 
-  addRating: (productId: string, ratingData) => {
-    const newRating: Rating = {
-      ...ratingData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
+  addRating: async (productId: string, ratingData) => {
+    set({ loading: true, error: null });
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        set({ error: 'Authentication token not found', loading: false });
+        return false;
+      }
 
-    set(state => ({
-      products: state.products.map(product =>
-        product.id === productId
-          ? { ...product, ratings: [...product.ratings, newRating] }
-          : product
-      )
-    }));
+      const response = await fetch(
+        `${API_BASE_URL}/products/${productId}/ratings`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(ratingData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to add rating');
+      }
+
+      // Refresh products to get updated ratings
+      await get().fetchProducts();
+      set({ loading: false });
+      return true;
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to add rating',
+        loading: false,
+      });
+      return false;
+    }
   },
 
   getProductById: (id: string) => {
-    return get().products.find(product => product.id === id);
+    return get().products.find(
+      (product) => product._id === id || product.id === id
+    );
   },
 }));
+
+// Helper function to get auth token
+const getAuthToken = async (): Promise<string | null> => {
+  try {
+    const { getToken } = useAuthStore.getState();
+    return getToken();
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};

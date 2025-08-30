@@ -13,13 +13,14 @@ import {
   Platform,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import axios from 'axios';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuthStore();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -36,24 +37,17 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://192.168.1.105:8000/login', {
-        email,
-        password,
-      });
-
-      const { token, isVerified } = response.data;
-
-      if (!isVerified) {
-        Alert.alert('Error', 'Please verify your email before logging in. Check your inbox for the verification link.');
-        return;
+      const success = await login(email, password);
+      
+      if (success) {
+        console.log('Login successful');
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Error', 'Login failed. Please check your credentials.');
       }
-
-      console.log('Login successful, token:', token);
-      router.replace('/(tabs)');
     } catch (error: any) {
-      console.log('Login error:', error.response?.data || error.message);
-      const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
-      Alert.alert('Error', message);
+      console.log('Login error:', error);
+      Alert.alert('Error', 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

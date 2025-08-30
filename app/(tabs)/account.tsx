@@ -7,16 +7,16 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  ShoppingBag, 
-  Star, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  ShoppingBag,
+  Star,
   Settings,
   LogOut,
-  Shield
+  Shield,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -25,28 +25,29 @@ export default function Account() {
   const router = useRouter();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/auth/login');
-          },
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          console.log('Account: Logout button pressed');
+          await logout();
+          console.log('Account: Logout completed, navigating to login');
+          router.replace('/auth/login');
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleAdminAccess = () => {
-    if (user?.varsityId === '22235103032') {
-      router.push('/admin');
+    if (user?.role === 'admin') {
+      router.push('/(tabs)/admin');
     } else {
-      Alert.alert('Access Denied', 'You are not authorized to access the admin panel');
+      Alert.alert(
+        'Access Denied',
+        'You are not authorized to access the admin panel'
+      );
     }
   };
 
@@ -55,23 +56,26 @@ export default function Account() {
       icon: ShoppingBag,
       title: 'My Ads',
       subtitle: 'Manage your posted ads',
-      onPress: () => Alert.alert('Coming Soon', 'This feature will be available soon'),
+      onPress: () =>
+        Alert.alert('Coming Soon', 'This feature will be available soon'),
     },
     {
       icon: Star,
       title: 'My Ratings',
       subtitle: 'View your seller ratings',
-      onPress: () => Alert.alert('Coming Soon', 'This feature will be available soon'),
+      onPress: () =>
+        Alert.alert('Coming Soon', 'This feature will be available soon'),
     },
     {
       icon: Settings,
       title: 'Settings',
       subtitle: 'App preferences',
-      onPress: () => Alert.alert('Coming Soon', 'This feature will be available soon'),
+      onPress: () =>
+        Alert.alert('Coming Soon', 'This feature will be available soon'),
     },
   ];
 
-  if (user?.varsityId === '22235103032') {
+  if (user?.role === 'admin') {
     menuItems.unshift({
       icon: Shield,
       title: 'Admin Panel',

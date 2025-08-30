@@ -16,7 +16,6 @@ export default function RootLayout() {
         <Stack.Screen name="product/[id]" />
         <Stack.Screen name="chat/[userId]" />
         <Stack.Screen name="rating/[sellerId]" />
-        <Stack.Screen name="admin" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="dark" />

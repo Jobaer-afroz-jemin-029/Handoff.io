@@ -12,7 +12,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import axios from 'axios';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -24,6 +24,7 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { register } = useAuthStore();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -68,23 +69,28 @@ export default function Register() {
     };
 
     try {
-      const response = await axios.post('http://192.168.1.105:8000/register', user);
-      console.log('Registration response:', response.data);
-      Alert.alert('Success', 'Registration successful! Please check your email for verification.');
+      const success = await register(user);
       
-      // Clear the form
-      setFormData({
-        varsityId: '',
-        fullName: '',
-        email: '',
-        phoneNumber: '',
-        password: '',
-      });
+      if (success) {
+        console.log('Registration successful');
+        Alert.alert('Success', 'Registration successful! Please check your email for verification.');
+        
+        // Clear the form
+        setFormData({
+          varsityId: '',
+          fullName: '',
+          email: '',
+          phoneNumber: '',
+          password: '',
+        });
 
-      router.replace('/auth/login');
+        router.replace('/auth/login');
+      } else {
+        Alert.alert('Registration Error', 'Registration failed. Please try again.');
+      }
     } catch (error: any) {
-      console.log('Registration error:', error.response?.data || error.message);
-      Alert.alert('Registration Error', error.response?.data?.message || 'An error occurred');
+      console.log('Registration error:', error);
+      Alert.alert('Registration Error', 'An error occurred during registration.');
     } finally {
       setLoading(false);
     }

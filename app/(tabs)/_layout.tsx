@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router";
-import { Chrome as Home, Plus, MessageCircle, User } from "lucide-react-native";
+import { Chrome as Home, Plus, MessageCircle, User, Shield } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
 
   return (
     <Tabs
@@ -51,6 +53,15 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: "Admin",
+          tabBarIcon: ({ size, color }) => <Shield size={size} color={color} />,
+          href: user?.role === 'admin' ? undefined : null,
+        }}
+      />
+
     </Tabs>
   );
 }

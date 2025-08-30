@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,28 +10,42 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, Filter } from 'lucide-react-native';
+import { Search, Filter, Shield } from 'lucide-react-native';
 import { useProductStore } from '@/stores/productStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const categories = ['All', 'Phone', 'Computer', 'Bike', 'Book'];
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const { products } = useProductStore();
+  const { products, fetchProducts, loading, error } = useProductStore();
+  const { user } = useAuthStore();
   const router = useRouter();
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+  // Fetch products when component mounts
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === 'All' || product.category === selectedCategory;
     const isApproved = product.status === 'approved';
     return matchesSearch && matchesCategory && isApproved;
   });
 
+  console.log('Home screen - Total products:', products.length);
+  console.log('Home screen - Filtered products:', filteredProducts.length);
+  console.log('Home screen - Product statuses:', products.map(p => ({ title: p.title, status: p.status })));
+
   const renderProduct = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.productCard}
-      onPress={() => router.push(`/product/${item.id}`)}
+      onPress={() => router.push(`/product/${item._id || item.id}`)}
     >
       <Image
         source={{ uri: item.images[0] }}
@@ -49,13 +63,55 @@ export default function Home() {
     </TouchableOpacity>
   );
 
+  // Show loading state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>BUBT Mart</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading products...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    console.log('Home screen error:', error);
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>BUBT Mart</Text>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchProducts}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>BUBT Mart</Text>
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color="#1e40af" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          {user?.role === 'admin' && (
+            <TouchableOpacity 
+              style={styles.adminButton}
+              onPress={() => router.push('/(tabs)/admin')}
+            >
+              <Shield size={20} color="#1e40af" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.filterButton}>
+            <Filter size={20} color="#1e40af" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.searchContainer}>
@@ -89,7 +145,8 @@ export default function Home() {
             <Text
               style={[
                 styles.categoryButtonText,
-                selectedCategory === category && styles.activeCategoryButtonText,
+                selectedCategory === category &&
+                  styles.activeCategoryButtonText,
               ]}
             >
               {category}
@@ -101,7 +158,9 @@ export default function Home() {
       <FlatList
         data={filteredProducts}
         renderItem={renderProduct}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) =>
+          item._id || item.id || `product-${Math.random()}`
+        }
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.productsContainer}
@@ -132,6 +191,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1f2937',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  adminButton: {
+    padding: 8,
+    marginRight: 8,
+  },
   filterButton: {
     padding: 8,
   },
@@ -154,15 +221,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1f2937',
   },
-  categoriesContainer: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  categoriesContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
+ categoriesContainer: {
+  backgroundColor: '#fff',
+  borderBottomWidth: 1,
+  borderBottomColor: '#e5e7eb',
+},
+categoriesContent: {
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  flexDirection: 'row',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  minHeight: 100,
+},
+
   categoryButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -231,4 +303,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9ca3af',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#6b7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#dc2626',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#1e40af',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 10,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
 });

@@ -6,87 +6,98 @@ interface User {
   fullName: string;
   email: string;
   phoneNumber: string;
+  role?: 'user' | 'admin';
 }
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (varsityId: string, password: string) => Promise<boolean>;
-  register: (userData: Omit<User, 'id'> & { password: string }) => Promise<boolean>;
+  token: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (
+    userData: Omit<User, 'id'> & { password: string }
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
+  getToken: () => string | null;
 }
 
-// Mock users data
-const mockUsers = [
-  {
-    varsityId: '22235103032',
-    fullName: 'Admin User',
-    email: 'admin@bubt.edu.bd',
-    phoneNumber: '+8801234567890',
-    password: 'saijja',
-  },
-  {
-    varsityId: '22235103001',
-    fullName: 'John Doe',
-    email: 'john.doe@gmail.com',
-    phoneNumber: '+8801987654321',
-    password: '123456',
-  },
-  {
-    varsityId: '22235103002',
-    fullName: 'Jane Smith',
-    email: 'jane.smith@gmail.com',
-    phoneNumber: '+8801555555555',
-    password: '123456',
-  },
-];
+// IMPORTANT: Change this to your computer's actual IP address
+// Find your IP with: ipconfig (Windows) or ifconfig (Mac/Linux)
+// Use the IP address that looks like: 192.168.1.xxx
+const API_BASE_URL = 'http://192.168.1.105:8000'; // Your actual working IP
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
+  token: null,
 
-  login: async (varsityId: string, password: string) => {
-    try {
-      const user = mockUsers.find(
-        u => u.varsityId === varsityId && u.password === password
-      );
+login: async (email: string, password: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-      if (user) {
-        const { password: _, ...userWithoutPassword } = user;
-        await AsyncStorage.setItem('user', JSON.stringify(userWithoutPassword));
-        set({ user: userWithoutPassword, isAuthenticated: true });
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
     }
-  },
+
+    const data = await response.json();
+    console.log('Login - Backend response user:', data.user); // Log to verify
+
+    if (data.isVerified) {
+      const userData = {
+        varsityId: Array.isArray(data.user.varsityId) ? data.user.varsityId[0] : data.user.varsityId, // Ensure string
+        fullName: data.user.name,
+        email: data.user.email,
+        phoneNumber: '',
+        role: data.user.role || 'user',
+      };
+
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.setItem('token', data.token);
+
+      set({
+        user: userData,
+        isAuthenticated: true,
+        token: data.token,
+      });
+      
+      return true;
+    } else {
+      throw new Error('Please verify your email before logging in');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    return false;
+  }
+},
 
   register: async (userData) => {
     try {
-      // Check if user already exists
-      const existingUser = mockUsers.find(
-        u => u.varsityId === userData.varsityId || u.email === userData.email
-      );
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          varsityId: userData.varsityId,
+          fullName: userData.fullName,
+          email: userData.email,
+          password: userData.password,
+        }),
+      });
 
-      if (existingUser) {
-        return false;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
 
-      // In a real app, this would send data to backend
-      // For now, we'll just add to mock data
-      const newUser = {
-        varsityId: userData.varsityId,
-        fullName: userData.fullName,
-        email: userData.email,
-        phoneNumber: userData.phoneNumber,
-        password: userData.password,
-      };
-
-      mockUsers.push(newUser);
       return true;
     } catch (error) {
       console.error('Register error:', error);
@@ -96,8 +107,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
+      console.log('Logout: Starting logout process...');
       await AsyncStorage.removeItem('user');
-      set({ user: null, isAuthenticated: false });
+      await AsyncStorage.removeItem('token');
+      set({ user: null, isAuthenticated: false, token: null });
+      console.log('Logout: Successfully logged out');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -105,13 +119,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   checkAuthStatus: async () => {
     try {
-      const userData = await AsyncStorage.getItem('user');
-      if (userData) {
+      const [userData, token] = await Promise.all([
+        AsyncStorage.getItem('user'),
+        AsyncStorage.getItem('token'),
+      ]);
+
+      if (userData && token) {
         const user = JSON.parse(userData);
-        set({ user, isAuthenticated: true });
+        set({ user, isAuthenticated: true, token });
       }
     } catch (error) {
       console.error('Check auth status error:', error);
     }
+  },
+
+  getToken: () => {
+    return get().token;
   },
 }));
