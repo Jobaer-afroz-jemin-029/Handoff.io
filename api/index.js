@@ -44,7 +44,8 @@ const sendVerificationEmail = async (email, verificationToken) => {
     from: 'BUBT Mart <no-reply@bubtmart.com>',
     to: email,
     subject: 'Email Verification',
-    text: `Please click the link to verify your email: http://192.168.1.105:8000/verify/${verificationToken}`,
+    //text: `Please click the link to verify your email: http://192.168.1.105:8000/verify/${verificationToken}`,
+    text: `Please click the link to verify your email: https://handoff-v1jo.onrender.com/verify/${verificationToken}`,
   };
 
   try {
