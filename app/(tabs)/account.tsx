@@ -42,7 +42,7 @@ export default function Account() {
 
   const handleAdminAccess = () => {
     if (user?.role === 'admin') {
-      router.push('/(tabs)/admin');
+      router.push('/components/admin');
     } else {
       Alert.alert(
         'Access Denied',

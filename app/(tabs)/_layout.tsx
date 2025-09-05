@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Chrome as Home, Plus, MessageCircle, User, Shield } from "lucide-react-native";
+import { House as Home, Plus, MessageCircle, User, Shield } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/stores/authStore";
 
