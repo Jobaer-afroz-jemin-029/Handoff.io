@@ -80,7 +80,7 @@ export default function Account() {
       icon: Shield,
       title: 'Admin Panel',
       subtitle: 'Manage users and ads',
-      onPress: handleAdminAccess,
+      onPress: () => router.push('/components/admin'),
     });
   }
 
