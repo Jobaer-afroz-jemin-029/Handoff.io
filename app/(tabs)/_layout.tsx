@@ -46,13 +46,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: "Account",
-          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
-        }}
-      />
+    
       <Tabs.Screen
         name="admin"
         options={{
@@ -61,7 +55,13 @@ export default function TabLayout() {
           href: user?.role === 'admin' ? undefined : null,
         }}
       />
-
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "Account",
+          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

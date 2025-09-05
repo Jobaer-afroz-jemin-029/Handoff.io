@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { Search, Filter, Shield } from 'lucide-react-native';
 import { useProductStore } from '@/stores/productStore';
 import { useAuthStore } from '@/stores/authStore';
-
+import Logo from '../components/Logo';
 const categories = ['All', 'Phone', 'Computer', 'Bike', 'Book'];
 
 export default function Home() {
@@ -38,9 +38,7 @@ export default function Home() {
     return matchesSearch && matchesCategory && isApproved;
   });
 
-  console.log('Home screen - Total products:', products.length);
-  console.log('Home screen - Filtered products:', filteredProducts.length);
-  console.log('Home screen - Product statuses:', products.map(p => ({ title: p.title, status: p.status })));
+ 
 
   const renderProduct = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -67,9 +65,7 @@ export default function Home() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>BUBT Mart</Text>
-        </View>
+         <Logo style={{marginTop:120,marginLeft:70}}/>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading products...</Text>
         </View>
@@ -83,7 +79,7 @@ export default function Home() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>BUBT Mart</Text>
+          <Text style={styles.headerTitle}>BUBT i</Text>
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error: {error}</Text>
@@ -97,22 +93,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>BUBT Mart</Text>
-        <View style={styles.headerButtons}>
-          {user?.role === 'admin' && (
-            <TouchableOpacity 
-              style={styles.adminButton}
-              onPress={() => router.push('/(tabs)/admin')}
-            >
-              <Shield size={20} color="#1e40af" />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={styles.filterButton}>
-            <Filter size={20} color="#1e40af" />
-          </TouchableOpacity>
-        </View>
-      </View>
+       <Logo style={{marginTop:40,marginLeft:80}}/>
 
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>

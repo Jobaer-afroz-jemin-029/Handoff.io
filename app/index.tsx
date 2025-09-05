@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import Logo from "./components/Logo";
 
 export default function Index() {
   const router = useRouter();
@@ -26,13 +27,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>🛒</Text>
-        </View>
-        <Text style={styles.title}>BUBT Mart</Text>
-        <Text style={styles.subtitle}>Student Marketplace</Text>
-      </View>
+       <Logo style={{}}/>
       <Text style={styles.loading}>Loading...</Text>
     </View>
   );
@@ -43,7 +38,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1e40af',
+    backgroundColor: '#ffffff',
   },
   logoContainer: {
     alignItems: 'center',
@@ -80,7 +75,7 @@ const styles = StyleSheet.create({
     color: '#e0e7ff',
   },
   loading: {
-    color: '#e0e7ff',
+    color: '#b0b1b4',
     fontSize: 16,
   },
 });

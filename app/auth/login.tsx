@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import Logo from "../components/Logo";
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -60,11 +61,7 @@ export default function Login() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>🛒</Text>
-        <Text style={styles.title}>BUBT Mart</Text>
-        <Text style={styles.subtitle}>Welcome Back!</Text>
-      </View>
+       <Logo style={{marginLeft:70,marginBottom:30}}/>
 
       <View style={styles.form}>
         <View style={styles.inputGroup}>

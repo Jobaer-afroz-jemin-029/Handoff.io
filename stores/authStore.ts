@@ -22,11 +22,9 @@ interface AuthState {
   getToken: () => string | null;
 }
 
-// IMPORTANT: Change this to your computer's actual IP address
-// Find your IP with: ipconfig (Windows) or ifconfig (Mac/Linux)
-// Use the IP address that looks like: 192.168.1.xxx
-//const API_BASE_URL = 'http://192.168.1.105:8000'; // Your actual working IP
-const API_BASE_URL = 'https://handoff-v1jo.onrender.com'; // Your actual working IP
+
+//const API_BASE_URL = 'http://192.168.1.105:8000'; 
+const API_BASE_URL = 'https://handoff-backend.onrender.com';
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -35,46 +33,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 login: async (email: string, password: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
+    const data = await response.json(); // Call only once
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed');
+      throw new Error(data.message || 'Login failed');
     }
 
-    const data = await response.json();
-    console.log('Login - Backend response user:', data.user); // Log to verify
-
-    if (data.isVerified) {
-      const userData = {
-        varsityId: Array.isArray(data.user.varsityId) ? data.user.varsityId[0] : data.user.varsityId, // Ensure string
-        fullName: data.user.name,
-        email: data.user.email,
-        phoneNumber: '',
-        role: data.user.role || 'user',
-      };
-
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      await AsyncStorage.setItem('token', data.token);
-
-      set({
-        user: userData,
-        isAuthenticated: true,
-        token: data.token,
-      });
-      
-      return true;
-    } else {
+    if (!data.isVerified) {
       throw new Error('Please verify your email before logging in');
     }
-  } catch (error) {
-    console.error('Login error:', error);
+
+    const userData = {
+      varsityId: data.user.varsityId,
+      fullName: data.user.name,
+      email: data.user.email,
+      phoneNumber: '',
+      role: data.user.role || 'user',
+    };
+
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    await AsyncStorage.setItem('token', data.token);
+
+    set({ user: userData, isAuthenticated: true, token: data.token });
+
+    return true;
+  } catch (error: any) {
+    console.error('Login error:', error.message || error);
     return false;
   }
 },

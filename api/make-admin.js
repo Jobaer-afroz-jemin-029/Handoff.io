@@ -14,7 +14,7 @@ mongoose
 async function makeAdmin() {
   try {
     // Replace this with your actual email address
-    const adminEmail = '22235103029@cse.bubt.edu.bd'; // Your email
+    const adminEmail = '22235103029@cse.bubt.edu.bd'; 
 
     console.log('Looking for user with email:', adminEmail);
 

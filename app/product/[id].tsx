@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, MessageCircle, Star, MapPin } from 'lucide-react-native';
 import { useProductStore } from '@/stores/productStore';
 import { useAuthStore } from '@/stores/authStore';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get('window');
 
@@ -54,6 +55,7 @@ export default function ProductDetail() {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f9fafb" }}>
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
@@ -78,7 +80,7 @@ export default function ProductDetail() {
         >
           {product.images.map((image, index) => (
             <Image
-              key={index}
+              key={`${image}-${index}`}
               source={{ uri: image }}
               style={[styles.productImage, { width }]}
               resizeMode="cover"
@@ -88,7 +90,7 @@ export default function ProductDetail() {
         <View style={styles.imageIndicators}>
           {product.images.map((_, index) => (
             <View
-              key={index}
+              key={`indicator-${index}`}
               style={[
                 styles.indicator,
                 currentImageIndex === index && styles.activeIndicator,
@@ -136,8 +138,8 @@ export default function ProductDetail() {
         {product.ratings.length > 0 && (
           <View style={styles.ratingsSection}>
             <Text style={styles.sectionTitle}>Seller Ratings</Text>
-            {product.ratings.slice(0, 3).map((rating) => (
-              <View key={rating.id} style={styles.ratingItem}>
+            {product.ratings.slice(0, 3).map((rating,index) => (
+              <View key={rating.id ?? index.toString()} style={styles.ratingItem}>
                 <View style={styles.ratingHeader}>
                   <Text style={styles.ratingBuyerName}>{rating.buyerName}</Text>
                   <View style={styles.starsContainer}>
@@ -176,6 +178,7 @@ export default function ProductDetail() {
         </View>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 

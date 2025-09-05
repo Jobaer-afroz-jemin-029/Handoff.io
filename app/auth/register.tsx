@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import Logo from '../components/Logo';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -107,11 +108,7 @@ export default function Register() {
           contentContainerStyle={[styles.content, { paddingBottom: 40 }]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Text style={styles.logo}>🛒</Text>
-            <Text style={styles.title}>Join BUBT Mart</Text>
-            <Text style={styles.subtitle}>Create your student account</Text>
-          </View>
+            <Logo style={{marginLeft:70,marginBottom:30}}/>
 
           <View style={styles.form}>
             <Text style={styles.label}>Varsity ID</Text>

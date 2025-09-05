@@ -43,11 +43,9 @@ interface ProductState {
   getProductById: (id: string) => Product | undefined;
 }
 
-// IMPORTANT: Change this to your computer's actual IP address
-// Find your IP with: ipconfig (Windows) or ifconfig (Mac/Linux)
-// Use the IP address that looks like: 192.168.1.xxx
-//const API_BASE_URL = 'http://192.168.1.105:8000/api'; // Your actual working IP
-const API_BASE_URL = 'https://handoff-v1jo.onrender.com'; // Your actual working IP // Your actual working IP
+
+//const API_BASE_URL = 'http://192.168.1.105:8000/api'; 
+const API_BASE_URL = 'https://handoff-backend.onrender.com/api'; 
 
 export const useProductStore = create<ProductState>((set, get) => ({
   products: [],
