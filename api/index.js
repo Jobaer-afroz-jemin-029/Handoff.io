@@ -41,7 +41,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
   });
 
   const mailOptions = {
-    from: 'HandOff <no-reply@bubtmart.com>',
+    from: 'HandOff <no-reply@handoff.com>',
     to: email,
     subject: 'Email Verification',
     //text: `Please click the link to verify your email: http://192.168.1.105:8000/verify/${verificationToken}`,
@@ -189,7 +189,7 @@ app.post('/api/login', async (req, res) => {
 
     const token = jwt.sign(
       { userId: user._id },
-      process.env.JWT_SECRET || 'your_jwt_secret',
+      process.env.JWT_SECRET ,
       {
         expiresIn: '1h',
       }
