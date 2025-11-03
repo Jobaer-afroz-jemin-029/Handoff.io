@@ -40,7 +40,8 @@ export default function Register() {
     }
 
     // Updated regex to only allow BUBT department emails (e.g., @cse.bubt.edu.bd, @eee.bubt.edu.bd, etc.)
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]+\.bubt\.edu\.bd$/;
+ const emailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9]+\.)?bubt\.edu\.bd$/;
+
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid BUBT email address (e.g., username@cse.bubt.edu.bd)');
       return false;
