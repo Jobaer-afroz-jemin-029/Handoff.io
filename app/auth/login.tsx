@@ -30,7 +30,8 @@ export default function Login() {
     }
 
     // Validate BUBT email format
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]+\.bubt\.edu\.bd$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9]+\.)?bubt\.edu\.bd$/;
+
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid BUBT email address (e.g., username@cse.bubt.edu.bd)');
       return;
